@@ -2,6 +2,7 @@ import { useEffect, useMemo } from 'react'
 import { createUnreadBadgeCountSelector } from '@/attention/unread/unread-badge-count-selector'
 import { useAppStore } from '@/store/index'
 import { createAgentNeedsInputSelector } from '@/components/activity/agent-needs-input-selector'
+import { createActivityUnreadChatCountSelector } from '@/components/activity/useActivityUnreadCount'
 import { selectFloatingWorkspaceHasUnread } from '@/store/workspaces/floating/floating-workspace-unread-selector'
 
 function setUnreadDockBadgeCountBestEffort(count: number, needsInput = false): void {
@@ -30,8 +31,13 @@ export function useUnreadDockBadge(
   )
   const selectAgentNeedsInput = useMemo(() => createAgentNeedsInputSelector(), [])
   const agentNeedsInput = useAppStore(selectAgentNeedsInput)
-  const unreadCount =
+  const selectUnreadChatCount = useMemo(() => createActivityUnreadChatCountSelector(), [])
+  const unreadChatCount = useAppStore(selectUnreadChatCount)
+  // Count chats so several finished agents in one workspace each show; workspace flags still cover non-agent alerts like terminal bells.
+  const unreadCount = Math.max(
+    unreadChatCount,
     unreadWorkspaceCount + (floatingTerminalHasUnread && !floatingTerminalOpen ? 1 : 0)
+  )
 
   useEffect(() => {
     setUnreadDockBadgeCountBestEffort(unreadCount, agentNeedsInput)
